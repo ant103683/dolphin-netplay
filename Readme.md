@@ -1,6 +1,6 @@
 # Dolphin - 联机对战功能优化
 
-  请直接使用dev-2509分支;
+  请直接使用sync-2512分支;
   这是一个专门为联机相关功能添加功能的版本, 目前已经支持:
 
 通用功能:
@@ -24,6 +24,8 @@
    1. 游戏中途可以直接更换玩家映射, 例如1P和2P互换, 或者把一个只能观战的映射为none的玩家调为1P或者2P等, 总之, 如果多个朋友一起玩对战游戏(例如BT3), 不再需要关闭游戏并重新打开来更换映射;
    2. 游戏可以从某个即时存档状态直接开始, 只要所有的客户端在Dolphin Emulation/StateSaves/initial/路径上放置同个即时存档文件, 并按照特定的格式命名, 游戏开始后所有人都会从这个即时存档状态开始游戏, 不再需要等待漫长的开始动画, 例如原版的日版BT3镜像: RDSJAF_531c9777.sav, 其中RDSJAF是游戏ID, 531c9777则是文件哈希值的前八位, 关于这点后续会补充按钮, 让用户直接保存到目标文件夹, 无须自己手动操作;
    3. 现在, 游戏中途也可以加入新的玩家! 玩家只需要在联机窗口点击"等待加入", 新玩家即可连接进入房间; 这个时候所有人的游戏会被暂停, 并且新玩家会接收服务器发送的即时存档, 速度取决于服务器带宽
+5. 其他特殊功能:
+   1. 现在, BT3(DBZ3、龙珠z电光火石3)支持联机5v5且不分屏对站, 不依赖wii官方服务器或者其他仿wii服务器(目前尚且存在两个问题:①地图选择失效,被固定为第一张地图;②对战开始后2P玩家的start按键会失效,无法主动暂停);
 
 总结:
    开发初衷是让新玩家可以更加简单的上手模拟器, 以及联机功能; 目前依旧正在开发中, 并且由于我是独自开发, 许多新功能没有经过严格的测试, 而且很多地方的实现应该采用更好的方法, 目前大部分代码是通过Trae实现的.
@@ -67,6 +69,9 @@ The project is now divided into two versions: **Server** (Headless) and **Client
     * Place identical files in `Dolphin Emulator/StateSaves/initial/`, all clients needing with same save.
     * Format: `GameID_Hash.sav` (e.g., `RDSJAF_531c9777.sav`).
 * **Late-Join Support**: New players can join mid-session! The game will pause while the new player receives the current **Savestate** from the server. (Transmission speed depends on server bandwidth).
+* **Other Special Features**:Currently, BT3 (DBZ3, Dragon Ball Z: Budokai Tenkaichi 3) supports 5v5 online matches in non-split-screen mode, without relying on the official Wii servers or any third-party Wii server emulations. There are currently two known issues:
+    * Map selection does not work and is fixed to the first map.
+    * After the match starts, Player 2's Start button becomes unresponsive, making it impossible to pause the game manually.
 
 ---
 
