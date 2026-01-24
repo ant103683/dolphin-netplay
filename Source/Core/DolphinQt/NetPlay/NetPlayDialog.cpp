@@ -152,8 +152,10 @@ void NetPlayDialog::CreateMainLayout()
   m_quit_button = new QPushButton(tr("Quit"));
   m_splitter = new QSplitter(Qt::Horizontal);
   m_menu_bar = new QMenuBar(this);
+  m_split_mode_combo = new QComboBox;
   m_perspective_combo = new QComboBox;
   int base_w = m_perspective_combo->sizeHint().width();
+  m_split_mode_combo->setFixedWidth(static_cast<int>(base_w * 1.2));
   m_perspective_combo->setFixedWidth(static_cast<int>(base_w * 1.2));
 
   m_data_menu = m_menu_bar->addMenu(tr("Data"));
@@ -274,11 +276,12 @@ void NetPlayDialog::CreateMainLayout()
   options_widget->addWidget(m_start_button, 0, 0, Qt::AlignVCenter);
   options_widget->addWidget(m_upload_button, 0, 1, Qt::AlignVCenter);
   options_widget->addWidget(m_wait_new_user_button, 0, 2, Qt::AlignVCenter);
-  options_widget->addWidget(m_perspective_combo, 0, 3, Qt::AlignVCenter);
-  options_widget->addWidget(m_buffer_label, 0, 4, Qt::AlignVCenter);
-  options_widget->addWidget(m_buffer_size_box, 0, 5, Qt::AlignVCenter);
-  options_widget->addWidget(m_quit_button, 0, 6, Qt::AlignVCenter | Qt::AlignRight);
-  options_widget->setColumnStretch(6, 1000);
+  options_widget->addWidget(m_split_mode_combo, 0, 3, Qt::AlignVCenter);
+  options_widget->addWidget(m_perspective_combo, 0, 4, Qt::AlignVCenter);
+  options_widget->addWidget(m_buffer_label, 0, 5, Qt::AlignVCenter);
+  options_widget->addWidget(m_buffer_size_box, 0, 6, Qt::AlignVCenter);
+  options_widget->addWidget(m_quit_button, 0, 7, Qt::AlignVCenter | Qt::AlignRight);
+  options_widget->setColumnStretch(7, 1000);
 
   m_main_layout->addLayout(options_widget, 2, 0, 1, -1, Qt::AlignRight);
   m_main_layout->setRowStretch(1, 1000);
@@ -465,6 +468,7 @@ void NetPlayDialog::ConnectWidgets()
   connect(m_upload_button, &QPushButton::clicked, this, &NetPlayDialog::OnUploadSave);
   connect(m_wait_new_user_button, &QPushButton::clicked, this, &NetPlayDialog::OnWaitNewUser);
   connect(m_quit_button, &QPushButton::clicked, this, &NetPlayDialog::reject);
+  connect(m_split_mode_combo, &QComboBox::currentIndexChanged, this, &NetPlayDialog::UpdateSelectedPerspectiveSuffix);
   connect(m_perspective_combo, &QComboBox::currentIndexChanged, this, &NetPlayDialog::UpdateSelectedPerspectiveSuffix);
 
   connect(m_game_button, &QPushButton::clicked, [this] {
@@ -991,9 +995,11 @@ void NetPlayDialog::UpdatePerspectiveSelector()
 #if IS_SERVER
   if (m_perspective_combo)
     m_perspective_combo->setVisible(false);
+  if (m_split_mode_combo)
+    m_split_mode_combo->setVisible(false);
   return;
 #endif
-  if (!m_perspective_combo)
+  if (!m_perspective_combo || !m_split_mode_combo)
     return;
   const std::string game_id = m_current_game_identifier.game_id;
   std::string hash_hex = Common::SHA1::DigestToString(m_current_game_identifier.sync_hash);
@@ -1006,74 +1012,73 @@ void NetPlayDialog::UpdatePerspectiveSelector()
     if (!name.empty() && name.find("531c9777") != std::string::npos && game_id == "RDSJAF")
       show = true;
   }
-  m_perspective_combo->setVisible(show);
+  m_split_mode_combo->setVisible(show);
   if (!show)
   {
+    m_perspective_combo->setVisible(false);
     m_perspective_initialized = false;
-    m_perspective_key.clear();
     return;
   }
-  const std::string key = game_id + ":" + hash8;
-  if (!m_perspective_initialized || m_perspective_key != key)
+
+  // Initialize split mode options if needed
+  if (m_split_mode_combo->count() == 0)
   {
-    QSignalBlocker blocker(m_perspective_combo);
-    PopulatePerspectiveOptions();
-    const std::string pref = Config::Get(Config::NETPLAY_PERSPECTIVE);
-    int idx_default = m_perspective_combo->findText(tr("默认分屏"));
-    int idx_nosplit = m_perspective_combo->findText(tr("不分屏"));
-    int idx_1p = m_perspective_combo->findText(tr("1P视角"));
-    int idx_2p = m_perspective_combo->findText(tr("2P视角"));
-    int target = idx_default >= 0 ? idx_default : 0;
-    if (pref == "nosplit" && idx_nosplit >= 0) target = idx_nosplit;
-    else if (pref == "1p" && idx_1p >= 0) target = idx_1p;
-    else if (pref == "2p" && idx_2p >= 0) target = idx_2p;
-    m_perspective_combo->setCurrentIndex(target);
-    m_perspective_initialized = true;
-    m_perspective_key = key;
-    blocker.unblock();
-    UpdateSelectedPerspectiveSuffix();
+    m_split_mode_combo->addItem(tr("默认分屏"));
+    m_split_mode_combo->addItem(tr("不分屏"));
+    m_split_mode_combo->setCurrentIndex(0);
   }
+
+  bool is_no_split = (m_split_mode_combo->currentIndex() == 1);
+  if (!is_no_split)
+  {
+    m_perspective_combo->setVisible(false);
+  }
+  else
+  {
+    auto client = Settings::Instance().GetNetPlayClient();
+    int slot = -1;
+    if (client)
+    {
+      const auto& gc_map = client->GetPadMapping();
+      const auto& wii_map = client->GetWiimoteMapping();
+      const auto local_pid = client->GetLocalPlayerId();
+      for (int i = 0; i < 4; ++i)
+      {
+        if (gc_map[i] == local_pid || wii_map[i] == local_pid)
+        {
+          slot = i + 1;
+          break;
+        }
+      }
+    }
+
+    if (slot == 1 || slot == 2)
+    {
+      m_perspective_combo->setVisible(false);
+    }
+    else
+    {
+      m_perspective_combo->setVisible(true);
+      if (m_perspective_combo->count() == 0 || m_perspective_combo->itemText(0) != tr("1P视角"))
+      {
+        QSignalBlocker blocker(m_perspective_combo);
+        m_perspective_combo->clear();
+        m_perspective_combo->addItem(tr("1P视角"));
+        m_perspective_combo->addItem(tr("2P视角"));
+        m_perspective_combo->setCurrentIndex(0);
+      }
+    }
+  }
+  UpdateSelectedPerspectiveSuffix();
 }
 
 void NetPlayDialog::PopulatePerspectiveOptions()
 {
-  if (!m_perspective_combo)
-    return;
-  m_perspective_combo->clear();
-  m_perspective_combo->addItem(tr("默认分屏"));
-  auto client = Settings::Instance().GetNetPlayClient();
-  if (!client)
-  {
-    m_perspective_combo->addItem(tr("1P视角"));
-    m_perspective_combo->addItem(tr("2P视角"));
-    return;
-  }
-  const auto& gc_map = client->GetPadMapping();
-  const auto& wii_map = client->GetWiimoteMapping();
-  const auto local_pid = client->GetLocalPlayerId();
-  int slot = -1;
-  for (int i = 0; i < 4; ++i)
-  {
-    if (gc_map[i] == local_pid || wii_map[i] == local_pid)
-    {
-      slot = i + 1;
-      break;
-    }
-  }
-  if (slot == 1 || slot == 2)
-  {
-    m_perspective_combo->addItem(tr("不分屏"));
-  }
-  else
-  {
-    m_perspective_combo->addItem(tr("1P视角"));
-    m_perspective_combo->addItem(tr("2P视角"));
-  }
 }
 
 void NetPlayDialog::UpdateSelectedPerspectiveSuffix()
 {
-  if (!m_perspective_combo)
+  if (!m_perspective_combo || !m_split_mode_combo)
     return;
   const std::string game_id = m_current_game_identifier.game_id;
   std::string hash_hex = Common::SHA1::DigestToString(m_current_game_identifier.sync_hash);
@@ -1084,60 +1089,42 @@ void NetPlayDialog::UpdateSelectedPerspectiveSuffix()
     NetPlay::NetplayManager::GetInstance().SetInitialStateVariantSuffix("");
     return;
   }
-  auto client = Settings::Instance().GetNetPlayClient();
-  int idx = m_perspective_combo->currentIndex();
-  if (!client)
+
+  bool is_no_split = (m_split_mode_combo->currentIndex() == 1);
+  if (!is_no_split)
   {
-    if (idx == 1)
-      NetPlay::NetplayManager::GetInstance().SetInitialStateVariantSuffix("_1P");
-    else if (idx == 2)
-      NetPlay::NetplayManager::GetInstance().SetInitialStateVariantSuffix("_2P");
-    else
-      NetPlay::NetplayManager::GetInstance().SetInitialStateVariantSuffix("");
+    NetPlay::NetplayManager::GetInstance().SetInitialStateVariantSuffix("");
     return;
   }
-  const auto& gc_map = client->GetPadMapping();
-  const auto& wii_map = client->GetWiimoteMapping();
-  const auto local_pid = client->GetLocalPlayerId();
+
+  auto client = Settings::Instance().GetNetPlayClient();
   int slot = -1;
-  for (int i = 0; i < 4; ++i)
+  if (client)
   {
-    if (gc_map[i] == local_pid || wii_map[i] == local_pid)
+    const auto& gc_map = client->GetPadMapping();
+    const auto& wii_map = client->GetWiimoteMapping();
+    const auto local_pid = client->GetLocalPlayerId();
+    for (int i = 0; i < 4; ++i)
     {
-      slot = i + 1;
-      break;
+      if (gc_map[i] == local_pid || wii_map[i] == local_pid)
+      {
+        slot = i + 1;
+        break;
+      }
     }
   }
-  QString text = m_perspective_combo->itemText(idx);
-  if (text == tr("No Split"))
-  {
-    Config::SetCurrent(Config::NETPLAY_PERSPECTIVE, "nosplit");
-    if (slot == 1)
-      NetPlay::NetplayManager::GetInstance().SetInitialStateVariantSuffix("_1P");
-    else if (slot == 2)
-      NetPlay::NetplayManager::GetInstance().SetInitialStateVariantSuffix("_2P");
-    else
-      NetPlay::NetplayManager::GetInstance().SetInitialStateVariantSuffix("");
-    if (client) { client->RecheckInitialStateAvailability(); client->TrySendInitialStateAck(); }
-  }
-  else if (text == tr("1P Perspective"))
-  {
-    Config::SetCurrent(Config::NETPLAY_PERSPECTIVE, "1p");
-    NetPlay::NetplayManager::GetInstance().SetInitialStateVariantSuffix("_1P");
-    if (client) { client->RecheckInitialStateAvailability(); client->TrySendInitialStateAck(); }
-  }
-  else if (text == tr("2P Perspective"))
-  {
-    Config::SetCurrent(Config::NETPLAY_PERSPECTIVE, "2p");
-    NetPlay::NetplayManager::GetInstance().SetInitialStateVariantSuffix("_2P");
-    if (client) { client->RecheckInitialStateAvailability(); client->TrySendInitialStateAck(); }
-  }
+
+  std::string suffix = "";
+  if (slot == 1) suffix = "_1P";
+  else if (slot == 2) suffix = "_2P";
   else
   {
-    Config::SetCurrent(Config::NETPLAY_PERSPECTIVE, "default");
-    NetPlay::NetplayManager::GetInstance().SetInitialStateVariantSuffix("");
-    if (client) { client->RecheckInitialStateAvailability(); client->TrySendInitialStateAck(); }
+    if (m_perspective_combo->currentIndex() == 1) suffix = "_2P";
+    else suffix = "_1P";
   }
+
+  NetPlay::NetplayManager::GetInstance().SetInitialStateVariantSuffix(suffix);
+  if (client) { client->RecheckInitialStateAvailability(); client->TrySendInitialStateAck(); }
 }
 
 // NetPlayUI methods

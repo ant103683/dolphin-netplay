@@ -155,6 +155,7 @@ private:
   QPushButton* m_wait_new_user_button;
   QLabel* m_buffer_label;
   QSpinBox* m_buffer_size_box;
+  QComboBox* m_split_mode_combo;
   QComboBox* m_perspective_combo;
 
   QActionGroup* m_savedata_style_group;
