@@ -19,7 +19,7 @@ namespace Common
 #define BUILD_TYPE_STR ""
 #endif
 
-#define DBZ3_VERSION " TO LOVERS OF DBZ3"
+#define DBZ3_VERSION "DOLPHIN-DBZ3-EXP"
 
 const std::string& GetScmRevStr()
 {
@@ -39,13 +39,13 @@ const std::string& GetScmRevStr()
 
 const std::string& GetScmRevGitStr()
 {
-  static const std::string scm_rev_git_str = "modified-by-yihe";
+  static const std::string scm_rev_git_str = "dolp-dbz3-exp";
   return scm_rev_git_str;
 }
 
 const std::string& GetScmDescStr()
 {
-  static const std::string scm_desc_str = "modified-by-yihe";
+  static const std::string scm_desc_str = "dolp-dbz3-exp";
   return scm_desc_str;
 }
 
@@ -57,7 +57,7 @@ const std::string& GetScmBranchStr()
 
 const std::string& GetUserAgentStr()
 {
-  static const std::string user_agent_str = "version/yihe";
+  static const std::string user_agent_str = "version/dolp-dbz3-exp";
   return user_agent_str;
 }
 
@@ -83,7 +83,7 @@ const std::string& GetNetplayDolphinVer()
  //#else
  //  static const std::string netplay_dolphin_ver = SCM_DESC_STR " Lin";
  //#endif
-  static const std::string netplay_dolphin_ver = "modified-by-yihe";
+  static const std::string netplay_dolphin_ver = "dolp-dbz3-exp";
   return netplay_dolphin_ver;
 }
 
