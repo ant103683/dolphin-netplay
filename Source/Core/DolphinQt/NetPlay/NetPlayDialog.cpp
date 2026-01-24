@@ -27,6 +27,7 @@
 #include <sstream>
 
 #include <fmt/ranges.h>
+#include <stdbool.h>
 
 #include "Common/CommonPaths.h"
 #include "Common/Config/Config.h"
@@ -710,8 +711,8 @@ void NetPlayDialog::show(std::string nickname, bool use_traversal)
   m_hide_remote_gbas_action->setVisible(false);
 #endif
   m_start_button->setHidden(false);
-  m_upload_button->setHidden(is_hosting);
-  m_wait_new_user_button->setVisible(true);
+  m_upload_button->setHidden(true);
+  m_wait_new_user_button->setVisible(false);
   m_kick_button->setHidden(!is_hosting);
   m_assign_ports_button->setVisible(true);
   m_room_box->setHidden(!is_hosting);
@@ -813,7 +814,7 @@ void NetPlayDialog::UpdateGUI()
   // Allow start if game selected and not running, for both host and client
   bool game_can_start = game_selected && !game_running;
   m_start_button->setEnabled(game_can_start);
-  m_wait_new_user_button->setVisible(true);
+  m_wait_new_user_button->setVisible(false);
   m_wait_new_user_button->setEnabled(client != nullptr);
   if (!game_running && m_wait_new_user_active)
   {
@@ -822,7 +823,7 @@ void NetPlayDialog::UpdateGUI()
   }
 
   const bool is_hosting = server != nullptr;
-  m_upload_button->setVisible(!is_hosting);
+  m_upload_button->setVisible(false);
   m_upload_button->setEnabled(client != nullptr);
 
   bool game_can_change = !game_running;
