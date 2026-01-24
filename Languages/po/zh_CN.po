@@ -16259,3 +16259,45 @@ msgstr "应用"
 #: qtbase/src/gui/kernel/qplatformtheme.cpp:742
 msgid "Restore Defaults"
 msgstr "恢复默认值"
+
+msgid "Wait for Join"
+msgstr "等待加入"
+
+msgid "Sending request: Controller Mapping Change..."
+msgstr "发送请求:控制器映射更改..."
+
+msgid "Sending request: Start Game..."
+msgstr "发送请求:开始游戏..."
+
+msgid "If the game does not start, the server has not checked [Allow Client Start], no need to retry."
+msgstr "如果游戏没有开始，证明该服务器未勾选[客户端开始]，无需继续尝试."
+
+msgid "Requesting Pause, waiting for new player..."
+msgstr "请求暂停，等待新人加入"
+
+msgid "Cancel Wait"
+msgstr "取消等待"
+
+msgid "Cancel Wait, notifying everyone to continue"
+msgstr "取消等待，通知所有人继续"
+
+msgid "Wait ended, resuming game"
+msgstr "等待已结束，继续游戏"
+
+msgid "Sending request: Upload Save..."
+msgstr "发送请求:上传存档..."
+
+msgid "Default Split"
+msgstr "默认分屏"
+
+msgid "No Split"
+msgstr "不分屏"
+
+msgid "1P Perspective"
+msgstr "1P视角"
+
+msgid "2P Perspective"
+msgstr "2P视角"
+
+msgid "NetPlay Nickname:"
+msgstr "联机昵称:"

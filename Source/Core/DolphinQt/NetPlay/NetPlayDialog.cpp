@@ -145,7 +145,7 @@ void NetPlayDialog::CreateMainLayout()
   m_game_button = new QPushButton;
   m_start_button = new QPushButton(tr("Start"));
   m_upload_button = new QPushButton(tr("Upload Save"));
-  m_wait_new_user_button = new QPushButton(tr("等待加入"));
+  m_wait_new_user_button = new QPushButton(tr("Wait for Join"));
   m_buffer_size_box = new QSpinBox;
   m_buffer_label = new QLabel(tr("Buffer:"));
   m_quit_button = new QPushButton(tr("Quit"));
@@ -404,7 +404,7 @@ void NetPlayDialog::ConnectWidgets()
       else if (client) // Added explicit check for client before calling its method
       {
         // Client: Send a request to the server to change mappings
-        DisplayMessage(tr("发送请求:控制器映射更改..."), "blue");
+        DisplayMessage(tr("Sending request: Controller Mapping Change..."), "blue");
         client->RequestPadMappingChange(new_gc_maps, new_gba_config, new_wii_maps);
       }
     }
@@ -625,8 +625,8 @@ void NetPlayDialog::OnStart()
     client->SendAsync(std::move(request_packet));
 
     // 给用户一些反馈
-    DisplayMessage(tr("发送请求:开始游戏..."), "blue");
-    // DisplayMessage(tr("如果游戏没有开始，证明该服务器未勾选[客户端开始]，无需继续尝试."), "red");
+    DisplayMessage(tr("Sending request: Start Game..."), "blue");
+    // DisplayMessage(tr("If the game does not start, the server has not checked [Allow Client Start], no need to retry."), "red");
     // 暂时禁用开始按钮防止重复点击 (UpdateGUI 会处理)
     m_start_button->setEnabled(false);
   }
@@ -642,17 +642,17 @@ void NetPlayDialog::OnWaitNewUser()
   {
     pac << static_cast<u8>(NetPlay::MessageID::MidJoinAwaitNewUser);
     client->SendAsync(std::move(pac));
-    DisplayMessage(tr("请求暂停，等待新人加入"), "blue");
+    DisplayMessage(tr("Requesting Pause, waiting for new player..."), "blue");
     m_wait_new_user_active = true;
-    m_wait_new_user_button->setText(tr("取消等待"));
+    m_wait_new_user_button->setText(tr("Cancel Wait"));
   }
   else
   {
     pac << static_cast<u8>(NetPlay::MessageID::MidJoinCancelAwait);
     client->SendAsync(std::move(pac));
-    DisplayMessage(tr("取消等待，通知所有人继续"), "blue");
+    DisplayMessage(tr("Cancel Wait, notifying everyone to continue"), "blue");
     m_wait_new_user_active = false;
-    m_wait_new_user_button->setText(tr("等待加入"));
+    m_wait_new_user_button->setText(tr("Wait for Join"));
   }
 }
 
@@ -660,8 +660,8 @@ void NetPlayDialog::OnResumeSimulation()
 {
   m_wait_new_user_active = false;
   if (m_wait_new_user_button)
-    m_wait_new_user_button->setText(tr("等待加入"));
-  DisplayMessage(tr("等待已结束，继续游戏"), "blue");
+    m_wait_new_user_button->setText(tr("Wait for Join"));
+  DisplayMessage(tr("Wait ended, resuming game"), "blue");
 }
 void NetPlayDialog::reject()
 {
@@ -680,7 +680,7 @@ void NetPlayDialog::show(std::string nickname, bool use_traversal)
   m_old_player_count = 0;
   m_wait_new_user_active = false;
   if (m_wait_new_user_button)
-    m_wait_new_user_button->setText(tr("等待加入"));
+    m_wait_new_user_button->setText(tr("Wait for Join"));
 
   m_room_box->clear();
   m_chat_edit->clear();
@@ -818,7 +818,7 @@ void NetPlayDialog::UpdateGUI()
   if (!game_running && m_wait_new_user_active)
   {
     m_wait_new_user_active = false;
-    m_wait_new_user_button->setText(tr("等待加入"));
+    m_wait_new_user_button->setText(tr("Wait for Join"));
   }
 
   const bool is_hosting = server != nullptr;
@@ -1109,7 +1109,7 @@ void NetPlayDialog::UpdateSelectedPerspectiveSuffix()
     }
   }
   QString text = m_perspective_combo->itemText(idx);
-  if (text == tr("不分屏"))
+  if (text == tr("No Split"))
   {
     Config::SetCurrent(Config::NETPLAY_PERSPECTIVE, "nosplit");
     if (slot == 1)
@@ -1120,13 +1120,13 @@ void NetPlayDialog::UpdateSelectedPerspectiveSuffix()
       NetPlay::NetplayManager::GetInstance().SetInitialStateVariantSuffix("");
     if (client) { client->RecheckInitialStateAvailability(); client->TrySendInitialStateAck(); }
   }
-  else if (text == tr("1P视角"))
+  else if (text == tr("1P Perspective"))
   {
     Config::SetCurrent(Config::NETPLAY_PERSPECTIVE, "1p");
     NetPlay::NetplayManager::GetInstance().SetInitialStateVariantSuffix("_1P");
     if (client) { client->RecheckInitialStateAvailability(); client->TrySendInitialStateAck(); }
   }
-  else if (text == tr("2P视角"))
+  else if (text == tr("2P Perspective"))
   {
     Config::SetCurrent(Config::NETPLAY_PERSPECTIVE, "2p");
     NetPlay::NetplayManager::GetInstance().SetInitialStateVariantSuffix("_2P");

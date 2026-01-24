@@ -774,7 +774,7 @@ void MainWindow::ConnectStack()
   netplayContainer->setLayout(netplayLayout);
 
   // 添加联机昵称标签和输入框
-  auto* nicknameLabel = new QLabel(tr("联机昵称:"));
+  auto* nicknameLabel = new QLabel(tr("NetPlay Nickname:"));
   m_nickname_edit = new QLineEdit;
   // 设置初始值为配置中的昵称
   m_nickname_edit->setText(QString::fromStdString(Config::Get(Config::NETPLAY_NICKNAME)));
@@ -782,7 +782,7 @@ void MainWindow::ConnectStack()
   m_nickname_edit->setTextMargins(2, 0, 0, 0);
 
   // 添加IP地址标签和输入框
-  auto* ipLabel = new QLabel(tr("IP地址:"));
+  auto* ipLabel = new QLabel(tr("IP Address:"));
   m_ip_edit = new QLineEdit;
   // 设置初始值为配置中的IP地址
   m_ip_edit->setText(QString::fromStdString(Config::Get(Config::NETPLAY_ADDRESS)));
@@ -790,7 +790,7 @@ void MainWindow::ConnectStack()
   m_ip_edit->setTextMargins(2, 0, 0, 0);
 
   // 添加端口标签和SpinBox输入框
-  auto* portLabel = new QLabel(tr("端口:"));
+  auto* portLabel = new QLabel(tr("Port:"));
   m_port_box = new QSpinBox();     // 确保 m_port_box 被正确创建为 QSpinBox
   m_port_box->setRange(1, 65535);  // 设置端口的有效范围
   u16 port_value_init = Config::Get(Config::NETPLAY_CONNECT_PORT);  // 获取 u16 类型的值
