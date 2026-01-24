@@ -1123,6 +1123,9 @@ void NetPlayDialog::UpdateSelectedPerspectiveSuffix()
     else suffix = "_1P";
   }
 
+  if (NetPlay::NetplayManager::GetInstance().GetInitialStateVariantSuffix() == suffix)
+    return;
+
   NetPlay::NetplayManager::GetInstance().SetInitialStateVariantSuffix(suffix);
   if (client) { client->RecheckInitialStateAvailability(); client->TrySendInitialStateAck(); }
 }
