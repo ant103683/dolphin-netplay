@@ -200,7 +200,8 @@ private:
   void NetPlayInit();
   bool NetPlayJoin();
   bool NetPlayJoinWithParams(std::string nickname, std::string connect_ip, u16 connect_port);
-  bool NetPlayHost(const UICommon::GameFile& game);
+  bool NetPlayHost(const UICommon::GameFile& game, const std::string& game_id = "",
+                   const std::string& sync_hash = "", const std::string& netplay_name = "");
   void NetPlayQuit();
 
   void OnBootGameCubeIPL(DiscIO::Region region);

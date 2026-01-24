@@ -18,6 +18,8 @@
 #include <QVBoxLayout>
 #include <QWindow>
 #include <QPushButton>
+#include <QTimer>
+#include <cstdlib>
 
 #include <fmt/format.h>
 #include <vector>
@@ -738,7 +740,8 @@ void MainWindow::ConnectToolBar()
 void MainWindow::ConnectGameList()
 {
   connect(m_game_list, &GameList::GameSelected, this, [this] { Play(); });
-  connect(m_game_list, &GameList::NetPlayHost, this, &MainWindow::NetPlayHost);
+  connect(m_game_list, &GameList::NetPlayHost, this,
+          [this](const UICommon::GameFile& game) { NetPlayHost(game); });
   connect(m_game_list, &GameList::OnStartWithRiivolution, this,
           &MainWindow::ShowRiivolutionBootWidget);
 
@@ -1807,7 +1810,8 @@ bool MainWindow::NetPlayJoinWithParams(std::string nickname, std::string connect
   return true;
 }
 
-bool MainWindow::NetPlayHost(const UICommon::GameFile& game)
+bool MainWindow::NetPlayHost(const UICommon::GameFile& game, const std::string& game_id,
+                             const std::string& sync_hash, const std::string& netplay_name)
 {
   if (!Core::IsUninitialized(m_system))
   {
@@ -1852,11 +1856,41 @@ bool MainWindow::NetPlayHost(const UICommon::GameFile& game)
     return false;
   }
 
-  Settings::Instance().GetNetPlayServer()->ChangeGame(game.GetSyncIdentifier(),
-                                                      m_game_list->GetNetPlayName(game));
+  if (!game_id.empty() && !sync_hash.empty())
+  {
+    // Join our local server first
+    if (!NetPlayJoin())
+      return false;
 
-  // Join our local server
-  return NetPlayJoin();
+    // Delayed ChangeGame for IS_SERVER logic
+    QTimer::singleShot(500, [=]() {
+      auto server = Settings::Instance().GetNetPlayServer();
+      if (server)
+      {
+        NetPlay::SyncIdentifier id;
+        id.game_id = game_id;
+
+        // Parse hex hash string to array
+        for (size_t i = 0; i < 20 && i * 2 + 1 < sync_hash.size(); ++i)
+        {
+          std::string byteString = sync_hash.substr(i * 2, 2);
+          id.sync_hash[i] = (u8)strtol(byteString.c_str(), nullptr, 16);
+        }
+
+        server->ChangeGame(id, netplay_name);
+      }
+    });
+
+    return true;
+  }
+  else
+  {
+    Settings::Instance().GetNetPlayServer()->ChangeGame(game.GetSyncIdentifier(),
+                                                        m_game_list->GetNetPlayName(game));
+
+    // Join our local server
+    return NetPlayJoin();
+  }
 }
 
 void MainWindow::NetPlayQuit()

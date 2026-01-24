@@ -362,7 +362,26 @@ void NetPlaySetupDialog::accept()
     // 在服务器模式下，列表项并不包含 GameFile 指针。我们构造一个空的 GameFile 对象，
     // 以避免下游逻辑访问空指针导致崩溃。
     const auto dummy_game = std::make_shared<UICommon::GameFile>();
-    emit Host(*dummy_game);
+
+    std::string game_id;
+    std::string sync_hash;
+    std::string netplay_name = items[0]->text().toStdString();
+
+    QVariant v = items[0]->data(Qt::UserRole);
+    if (v.canConvert<picojson::value>())
+    {
+      picojson::value val = v.value<picojson::value>();
+      if (val.is<picojson::object>())
+      {
+        const auto& obj = val.get<picojson::object>();
+        if (obj.count("game_id") && obj.at("game_id").is<std::string>())
+          game_id = obj.at("game_id").get<std::string>();
+        if (obj.count("sync_hash") && obj.at("sync_hash").is<std::string>())
+          sync_hash = obj.at("sync_hash").get<std::string>();
+      }
+    }
+
+    emit Host(*dummy_game, game_id, sync_hash, netplay_name);
 #else
     {
       auto sp = items[0]->data(Qt::UserRole).value<std::shared_ptr<const UICommon::GameFile>>();

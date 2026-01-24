@@ -34,7 +34,8 @@ public:
 
 signals:
   bool Join();
-  bool Host(const UICommon::GameFile& game);
+  bool Host(const UICommon::GameFile& game, const std::string& game_id = "",
+            const std::string& sync_hash = "", const std::string& netplay_name = "");
 
 private:
   void CreateMainLayout();

@@ -822,7 +822,6 @@ void NetPlayDialog::UpdateGUI()
     m_wait_new_user_button->setText(tr("Wait for Join"));
   }
 
-  const bool is_hosting = server != nullptr;
   m_upload_button->setVisible(false);
   m_upload_button->setEnabled(client != nullptr);
 
