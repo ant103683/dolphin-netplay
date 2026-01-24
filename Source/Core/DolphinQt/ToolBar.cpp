@@ -132,6 +132,9 @@ void ToolBar::MakeActions()
   m_controllers_action = addAction(tr("Controllers"), this, &ToolBar::ControllersPressed);
   m_netplay_list = addAction(tr("NetplayList"), this, &ToolBar::NetplayList);
   m_info_list = addAction(tr("GamesInfo"), this, &ToolBar::GamesInfo);
+  // Export game list to JSON
+  // 暂时不开放使用
+  m_info_list->setVisible(false);
 
   // Ensure every button has about the same width
   std::vector<QWidget*> items;
