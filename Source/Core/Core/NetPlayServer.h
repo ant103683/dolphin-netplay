@@ -74,6 +74,7 @@ public:
 
   void AdjustPadBufferSize(unsigned int size);
   void SetHostInputAuthority(bool enable);
+  void SetSplitMode(u8 mode, const std::string& changer_name);
 
   void KickPlayer(PlayerId player);
 
@@ -183,6 +184,7 @@ private:
   bool m_update_pings = false;
   u32 m_current_game = 0;
   unsigned int m_target_buffer_size = 0;
+  u8 m_split_mode = 0;
   PadMappingArray m_pad_map;
   GBAConfigArray m_gba_config;
   PadMappingArray m_wiimote_map;

@@ -526,6 +526,7 @@ ConnectionError NetPlayServer::OnConnect(ENetPeer* incoming_connection, sf::Pack
     SendResponseToPlayer(new_player, MessageID::PadBuffer, m_target_buffer_size);
 
   SendResponseToPlayer(new_player, MessageID::HostInputAuthority, m_host_input_authority);
+  SendResponseToPlayer(new_player, MessageID::SplitMode, m_split_mode);
 
   for (const auto& existing_player : std::views::values(m_players))
   {
@@ -805,6 +806,32 @@ void NetPlayServer::SetHostInputAuthority(const bool enable)
   // resend pad buffer to clients when disabled
   if (!m_host_input_authority)
     AdjustPadBufferSize(m_target_buffer_size);
+}
+
+void NetPlayServer::SetSplitMode(const u8 mode, const std::string& changer_name)
+{
+  std::lock_guard lkg(m_crit.game);
+
+  const u8 normalized_mode = mode > 1 ? 0 : mode;
+  if (m_split_mode == normalized_mode)
+    return;
+
+  m_split_mode = normalized_mode;
+
+  if (m_dialog)
+    m_dialog->OnSplitModeChanged(m_split_mode);
+
+  if (!changer_name.empty())
+  {
+    const char* mode_label = m_split_mode == 1 ? "不分屏" : "默认分屏";
+    SendChatMessage(fmt::format("玩家{}已经把分屏改为{}", changer_name, mode_label));
+  }
+
+  sf::Packet spac;
+  spac << MessageID::SplitMode;
+  spac << m_split_mode;
+
+  SendAsyncToClients(std::move(spac));
 }
 
 void NetPlayServer::SendAsync(sf::Packet&& packet, const PlayerId pid, const u8 channel_id)
@@ -1989,6 +2016,27 @@ unsigned int NetPlayServer::OnData(sf::Packet& packet, Client& player)
     }
     this->AdjustPadBufferSize(static_cast<unsigned int>(requested_buffer_value));
     // AdjustPadBufferSize will handle broadcasting if not in HIA mode.
+  }
+  break;
+
+  case MessageID::REQUEST_SPLIT_MODE_CHANGE_ID:
+  {
+    if (packet.getReadPosition() + sizeof(u8) > packet.getDataSize())
+    {
+      WARN_LOG_FMT(NETPLAY, "Packet for REQUEST_SPLIT_MODE_CHANGE_ID too short from PID {}.",
+                   player.pid);
+      return 1;
+    }
+    u8 requested_mode = 0;
+    if (!(packet >> requested_mode))
+    {
+      WARN_LOG_FMT(NETPLAY, "Failed to deserialize split mode from REQUEST_SPLIT_MODE_CHANGE_ID (PID: {}).",
+                   player.pid);
+      return 1;
+    }
+    INFO_LOG_FMT(NETPLAY, "Player PID {} ({}) requested split mode change to: {}", player.pid,
+                 player.name, requested_mode);
+    SetSplitMode(requested_mode, player.name);
   }
   break;
 

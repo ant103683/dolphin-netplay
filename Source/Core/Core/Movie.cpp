@@ -175,6 +175,15 @@ std::string MovieManager::GetRerecords() const
 void MovieManager::FrameUpdate()
 {
   m_current_frame++;
+
+  // 暂停帧, 用于保存即时存档
+  //if (m_current_frame == 10500)
+  //{
+  //  Core::QueueHostJob([](Core::System& system) {
+  //    Core::SetState(system, Core::State::Paused);
+  //  });
+  //}
+
   if (!m_polled)
     m_current_lag_count++;
 

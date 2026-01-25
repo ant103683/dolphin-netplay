@@ -67,6 +67,7 @@ public:
   void OnPlayerDisconnect(const std::string& player) override;
   void OnPadBufferChanged(u32 buffer) override;
   void OnHostInputAuthorityChanged(bool enabled) override;
+  void OnSplitModeChanged(u8 mode) override;
   void OnDesync(u32 frame, const std::string& player) override;
   void OnConnectionLost() override;
   void OnConnectionError(const std::string& message) override;
@@ -194,6 +195,8 @@ private:
   int m_player_count = 0;
   int m_old_player_count = 0;
   bool m_host_input_authority = false;
+  int m_split_mode = 0;
+  bool m_split_mode_updating = false;
 
   StartGameCallback m_start_game_callback;
 };

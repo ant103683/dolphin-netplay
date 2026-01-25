@@ -153,6 +153,7 @@ enum class MessageID : u8
   PadBuffer = 0x62,
   PadHostData = 0x63,
   GBAConfig = 0x64,
+  SplitMode = 0x65,
 
   WiimoteData = 0x70,
   WiimoteMapping = 0x71,
@@ -215,6 +216,7 @@ enum class MessageID : u8
 
   REQUEST_PAD_MAPPING_CHANGE_ID = 0x58,
   REQUEST_BUFFER_CHANGE_ID = 0x59,
+  REQUEST_SPLIT_MODE_CHANGE_ID = 0x5A,
 };
 
 enum class ConnectionError : u8

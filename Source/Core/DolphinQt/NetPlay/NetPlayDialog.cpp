@@ -468,7 +468,27 @@ void NetPlayDialog::ConnectWidgets()
   connect(m_upload_button, &QPushButton::clicked, this, &NetPlayDialog::OnUploadSave);
   connect(m_wait_new_user_button, &QPushButton::clicked, this, &NetPlayDialog::OnWaitNewUser);
   connect(m_quit_button, &QPushButton::clicked, this, &NetPlayDialog::reject);
-  connect(m_split_mode_combo, &QComboBox::currentIndexChanged, this, &NetPlayDialog::UpdateSelectedPerspectiveSuffix);
+  connect(m_split_mode_combo, &QComboBox::currentIndexChanged, this, [this](int value) {
+    if (m_split_mode_updating)
+      return;
+    if (value == m_split_mode)
+    {
+      UpdateSelectedPerspectiveSuffix();
+      return;
+    }
+    m_split_mode = value;
+    auto client = Settings::Instance().GetNetPlayClient();
+    auto server = Settings::Instance().GetNetPlayServer();
+    if (server && IsHosting())
+    {
+      server->SetSplitMode(static_cast<u8>(value), m_nickname);
+    }
+    else if (client)
+    {
+      client->RequestSplitModeChange(static_cast<u8>(value));
+    }
+    UpdateSelectedPerspectiveSuffix();
+  });
   connect(m_perspective_combo, &QComboBox::currentIndexChanged, this, &NetPlayDialog::UpdateSelectedPerspectiveSuffix);
 
   connect(m_game_button, &QPushButton::clicked, [this] {
@@ -666,7 +686,7 @@ void NetPlayDialog::OnResumeSimulation()
   m_wait_new_user_active = false;
   if (m_wait_new_user_button)
     m_wait_new_user_button->setText(tr("Wait for Join"));
-  DisplayMessage(tr("Wait ended, resuming game"), "blue");
+  // DisplayMessage(tr("Wait ended, resuming game"), "blue");
 }
 void NetPlayDialog::reject()
 {
@@ -1025,7 +1045,12 @@ void NetPlayDialog::UpdatePerspectiveSelector()
   {
     m_split_mode_combo->addItem(tr("默认分屏"));
     m_split_mode_combo->addItem(tr("不分屏"));
-    m_split_mode_combo->setCurrentIndex(0);
+  }
+  const int desired_split_mode = m_split_mode == 1 ? 1 : 0;
+  if (m_split_mode_combo->currentIndex() != desired_split_mode)
+  {
+    const QSignalBlocker blocker(m_split_mode_combo);
+    m_split_mode_combo->setCurrentIndex(desired_split_mode);
   }
 
   bool is_no_split = (m_split_mode_combo->currentIndex() == 1);
@@ -1388,6 +1413,29 @@ void NetPlayDialog::OnHostInputAuthorityChanged(bool enabled)
       const QSignalBlocker blocker(m_buffer_size_box);
       m_buffer_size_box->setValue(Config::Get(Config::NETPLAY_CLIENT_BUFFER_SIZE));
     }
+  });
+}
+
+void NetPlayDialog::OnSplitModeChanged(u8 mode)
+{
+  const int normalized_mode = mode == 1 ? 1 : 0;
+  m_split_mode = normalized_mode;
+  QueueOnObject(this, [this, normalized_mode] {
+    if (!m_split_mode_combo)
+      return;
+    if (m_split_mode_combo->count() == 0)
+    {
+      m_split_mode_combo->addItem(tr("默认分屏"));
+      m_split_mode_combo->addItem(tr("不分屏"));
+    }
+    m_split_mode_updating = true;
+    {
+      const QSignalBlocker blocker(m_split_mode_combo);
+      if (m_split_mode_combo->currentIndex() != normalized_mode)
+        m_split_mode_combo->setCurrentIndex(normalized_mode);
+    }
+    m_split_mode_updating = false;
+    UpdateSelectedPerspectiveSuffix();
   });
 }
 

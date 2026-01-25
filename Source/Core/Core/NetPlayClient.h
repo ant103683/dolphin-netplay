@@ -67,6 +67,7 @@ public:
   virtual void OnPlayerDisconnect(const std::string& player) = 0;
   virtual void OnPadBufferChanged(u32 buffer) = 0;
   virtual void OnHostInputAuthorityChanged(bool enabled) = 0;
+  virtual void OnSplitModeChanged(u8 mode) = 0;
   virtual void OnDesync(u32 frame, const std::string& player) = 0;
   virtual void OnConnectionLost() = 0;
   virtual void OnConnectionError(const std::string& message) = 0;
@@ -188,6 +189,7 @@ public:
   void RequestPadMappingChange(const PadMappingArray& gc_map, const GBAConfigArray& gba_cfg,
                                const PadMappingArray& wii_map);
   void RequestBufferChange(int new_buffer_value);
+  void RequestSplitModeChange(u8 mode);
 
   // Request server to change game by minimal identifier (game_id + sync_hash)
   void RequestChangeGameIdHash(const std::string& game_id, const std::array<u8, 20>& sync_hash);
@@ -307,6 +309,7 @@ private:
   void OnWiimoteData(sf::Packet& packet);
   void OnPadBuffer(sf::Packet& packet);
   void OnHostInputAuthority(sf::Packet& packet);
+  void OnSplitMode(sf::Packet& packet);
   void OnGolfSwitch(sf::Packet& packet);
   void OnGolfPrepare(sf::Packet& packet);
   void OnChangeGame(sf::Packet& packet);

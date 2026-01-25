@@ -494,6 +494,10 @@ void NetPlayClient::OnData(sf::Packet& packet)
     OnHostInputAuthority(packet);
     break;
 
+  case MessageID::SplitMode:
+    OnSplitMode(packet);
+    break;
+
   case MessageID::GolfSwitch:
     OnGolfSwitch(packet);
     break;
@@ -619,13 +623,22 @@ void NetPlayClient::OnChatMessage(sf::Packet& packet)
   std::string msg;
   packet >> msg;
 
-  // don't need lock to read in this thread
-  const Player& player = m_players[pid];
+  std::string name;
+  {
+    std::lock_guard lkp(m_crit.players);
+    const auto it = m_players.find(pid);
+    if (it != m_players.end())
+      name = it->second.name;
+  }
+  if (pid == 0 && name.empty())
+    name = "服务器";
+  if (name.empty())
+    name = "?";
 
-  INFO_LOG_FMT(NETPLAY, "Player {} ({}) wrote: {}", player.name, player.pid, msg);
+  INFO_LOG_FMT(NETPLAY, "Player {} ({}) wrote: {}", name, pid, msg);
 
   // add to gui
-  m_dialog->AppendChat(fmt::format("{}[{}]: {}", player.name, pid, msg));
+  m_dialog->AppendChat(fmt::format("{}[{}]: {}", name, pid, msg));
 }
 
 void NetPlayClient::OnChunkedDataStart(sf::Packet& packet)
@@ -878,6 +891,13 @@ void NetPlayClient::OnPadBuffer(sf::Packet& packet)
 
   m_target_buffer_size = size;
   m_dialog->OnPadBufferChanged(size);
+}
+
+void NetPlayClient::OnSplitMode(sf::Packet& packet)
+{
+  u8 mode = 0;
+  packet >> mode;
+  m_dialog->OnSplitModeChanged(mode);
 }
 
 void NetPlayClient::OnHostInputAuthority(sf::Packet& packet)
@@ -1946,7 +1966,11 @@ std::vector<const Player*> NetPlayClient::GetPlayers()
   std::vector<const Player*> players;
 
   for (const auto& pair : m_players)
+  {
+    if (pair.first <= 0)
+      continue;
     players.push_back(&pair.second);
+  }
 
   return players;
 }
@@ -3096,6 +3120,18 @@ void NetPlayClient::RequestBufferChange(int new_buffer_value)
   packet << static_cast<s32>(new_buffer_value);
   Send(packet); // Assuming Send is a member function that takes sf::Packet by const reference or value
   INFO_LOG_FMT(NETPLAY, "Sent buffer change request to server: new_buffer_value = {}", new_buffer_value); // Corrected: Use {} for fmt
+}
+
+void NetPlayClient::RequestSplitModeChange(u8 mode)
+{
+  if (!m_server || !m_server->host)
+    return;
+
+  sf::Packet packet;
+  packet << static_cast<u8>(NetPlay::MessageID::REQUEST_SPLIT_MODE_CHANGE_ID);
+  packet << mode;
+  Send(packet);
+  INFO_LOG_FMT(NETPLAY, "Sent split mode change request to server: mode = {}", mode);
 }
 
 void NetPlayClient::RequestChangeGameFull(const UICommon::GameFile& game)
